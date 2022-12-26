@@ -1,6 +1,9 @@
 # rcccd
 Class Cover Catch Digraph Classification. cccd package is too slow, so I made a package myself. Random Walk approach is not implemented yet.
 
+# installation
+devtools::install_github("https://github.com/fatihsaglam/rcccd")
+
 # References
 Marchette, C. E. P. D. J., & Socolinsky, J. G. D. D. A. (2003). Classiﬁcation Using Class Cover Catch Digraphs. Journal of Classiﬁcation, 20, 3-23.
 
