@@ -1,7 +1,7 @@
 # rcccd
 Class Cover Catch Digraph Classification. cccd package is too slow, so I made a package myself. Random Walk approach is not implemented yet.
 
-# installation
+# R installation
 devtools::install_github("https://github.com/fatihsaglam/rcccd")
 
 # References
