@@ -1,9 +1,11 @@
-#' @title  Class Cover Catch Digraph Classifier
+#' @title  Random Walk Class Cover Catch Digraph Classifier
 #'
-#' @description Class Cover Catch Digraph Classification.
+#' @description Random Walk Class Cover Catch Digraph Classification.
 #'
 #' @param x asd.
 #' @param y asd
+#' @param method asd
+#' @param m asd
 #' @param proportion asd
 #'
 #' @details
@@ -16,6 +18,7 @@
 #'
 #' @importFrom  RANN nn2
 #' @importFrom  Rfast Dist
+#' @importFrom  Rfast dista
 #'
 #' @references
 #' asd
@@ -24,11 +27,10 @@
 #'
 #' rnorm(100)
 #'
-#' @rdname cccd_classifier
+#' @rdname rwcccd_classifier
 #' @export
 
-cccd_classifier <- function(x, y, proportion = 1) {
-
+rwcccd_classifier <- function(x, y, method = NULL, m = 1, proportion = 1) {
   p <- ncol(x)
   class_names <- levels(y)
   k_class <- length(class_names)
@@ -42,26 +44,40 @@ cccd_classifier <- function(x, y, proportion = 1) {
     i_main <- which(y == class_names[i])
     x_main <- x[i_main,]
     x_other <- x[-i_main,]
+    n_main <- nrow(x_main)
+    n_other <- nrow(x_other)
 
     n_main <- nrow(x_main)
 
-    dist_main2other <- RANN::nn2(data = x_other, query = x_main, k = 1)$nn.dist # nearest opposite class sample distance
-    dist_main2main <- Rfast::Dist(x = x_main) # main class distance matrix
-    M <- dist_main2main < c(dist_main2other) # main class observers which are nearer than opposite class nearest sample
+    dist_main2other <- Rfast::dista(xnew = x_main, x = x_other)
+    dist_main2main <- Rfast::Dist(x = x_main)
+    dist_main2all <- cbind(dist_main2main, dist_main2other)
+
+    # w <- c(rep(n_other/n_main, n_main), rep(-1, n_other))
+    w <- c(rep(1/n_main, n_main), rep(-1/n_other, n_other))
+    # w <- c(rep(1/n, n_main), rep(-1/n, n_other))
+
+    radii <- radii_rw(dist_main2all = dist_main2all,
+                      dist_main2main = dist_main2main,
+                      w = w,
+                      m = m,
+                      p = p)
+
+    M <- dist_main2main < c(radii)
     M <- matrix(as.numeric(M), n_main)
 
-    cover <- rep(0, n_main) # cover vector
-    thresh <- n_main*proportion # threshold
+    cover <- rep(0, n_main)
+    thresh <- n_main*proportion
 
     m_dominant <- f_cover_rcpp(cover = cover,
                                thresh = thresh,
+                               M = M,
                                dist_main2main = dist_main2main,
-                               dist_main2other = dist_main2other,
-                               M = M)
+                               dist_main2other = radii)
 
-    i_dominant_list[[i]] <- m_dominant$i_dominant # dominant main class indexes
-    x_dominant_list[[i]] <- x_main[m_dominant$i_dominant,,drop = FALSE] # dominant main class samples
-    radii_dominant_list[[i]] <- dist_main2other[m_dominant$i_dominant,] # radius of dominant main class samples
+    i_dominant_list[[i]] <- m_dominant$i_dominant
+    radii_dominant_list[[i]] <- radii[m_dominant$i_dominant]
+    x_dominant_list[[i]] <- x_main[m_dominant$i_dominant,]
     proportions[i] <- m_dominant$cover_proportion
   }
 
@@ -76,11 +92,3 @@ cccd_classifier <- function(x, y, proportion = 1) {
   class(results) <- "cccd_classifier"
   return(results)
 }
-
-
-
-
-
-
-
-

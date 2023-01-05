@@ -2,8 +2,10 @@
 
 S3method(predict,cccd_classifier)
 export(cccd_classifier)
+export(rwcccd_classifier)
 importFrom(RANN,nn2)
 importFrom(Rcpp,sourceCpp)
 importFrom(Rfast,Dist)
+importFrom(Rfast,dista)
 importFrom(proxy,dist)
 useDynLib(rcccd, .registration = TRUE)

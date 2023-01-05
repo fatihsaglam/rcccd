@@ -5,3 +5,7 @@ f_cover_rcpp <- function(cover, thresh, M, dist_main2main, dist_main2other) {
     .Call(`_rcccd_f_cover_rcpp`, cover, thresh, M, dist_main2main, dist_main2other)
 }
 
+radii_rw <- function(dist_main2all, dist_main2main, w, m, p) {
+    .Call(`_rcccd_radii_rw`, dist_main2all, dist_main2main, w, m, p)
+}
+

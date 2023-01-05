@@ -1,22 +1,22 @@
 Package: rcccd
 Type: Package
 Title: Class Cover Catch Digraph Classification
-Version: 0.1.0
+Version: 0.2.0
 Author: Fatih Sağlam
 Maintainer: Fatih Sağlam <saglamf89@gmail.com>
 Description: Class Cover Catch Digraph Classification.
 License: MIT + file LICENSE
 Import: 
-    FNN,
-    distances,
-    igraph
+    FNN
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.1
 LinkingTo: 
-    Rcpp
+    Rcpp,
+    RcppArmadillo
 Imports: 
     Rcpp,
+    RcppArmadillo,
     RANN,
     Rfast,
     proxy

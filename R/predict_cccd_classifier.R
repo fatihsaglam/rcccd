@@ -5,6 +5,7 @@
 #' @param object asd.
 #' @param newdata asd
 #' @param type asd
+#' @param ... asd
 #'
 #' @details
 #' asd

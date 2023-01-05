@@ -12,6 +12,8 @@
 \item{newdata}{asd}
 
 \item{type}{asd}
+
+\item{...}{asd}
 }
 \value{
 asd.
