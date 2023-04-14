@@ -1,5 +1,5 @@
 # rcccd
-Class Cover Catch Digraph Classification. cccd package is too slow, so I made a package myself. Random Walk approach is also implemented. There are two methods for it. One is equal weights for each class, the other is Manukyan and Ceyhan's (2016) step weights to deal with imbalancced classes. 
+Class Cover Catch Digraph Classification. `cccd` package is too slow, so I made a package myself. Random Walk approach is also implemented. There are two methods for it. One is equal weights for each class, the other is Manukyan and Ceyhan's (2016) step weights to deal with imbalancced classes. 
 
 # R installation
 devtools::install_github("https://github.com/fatihsaglam/rcccd")
