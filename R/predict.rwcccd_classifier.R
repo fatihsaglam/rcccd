@@ -1,10 +1,11 @@
-#' @title  Class Cover Catch Digraph Predictor
+#' @title  Random Walk Class Cover Catch Digraph Predictor
 #'
-#' @description Class Cover Catch Digraph Prediction
+#' @description Random Walk Class Cover Catch Digraph Prediction
 #'
 #' @param object asd.
 #' @param newdata asd
 #' @param type asd
+#' @param e asd
 #' @param ... asd
 #'
 #' @details
@@ -19,19 +20,21 @@
 #' @references
 #' asd
 #'
-#' @importFrom  proxy dist
+#' @importFrom proxy dist
+#' @importFrom Rfast colMins
 #'
 #'
 #' @examples
 #'
 #' rnorm(100)
 #'
-#' @rdname predict.cccd_classifier
+#' @rdname predict.rwcccd_classifier
 #' @export
 
-predict.cccd_classifier <- function(object, newdata, type = "pred", ...) {
+predict.rwcccd_classifier <- function(object, newdata, type = "pred", e = 0, ...) {
   x_dominant_list <- object$x_dominant_list
   radii_dominant_list <- object$radii_dominant_list
+  T_score_list <- object$T_score_list
   class_names <- object$class_names
   k_class <- object$k_class
 
@@ -42,8 +45,8 @@ predict.cccd_classifier <- function(object, newdata, type = "pred", ...) {
 
   for (i in 1:k_class) {
     dist_x2dom <- as.matrix(proxy::dist(x_dominant_list[[i]], x))
-    prop_x2dom <- dist_x2dom/radii_dominant_list[[i]]
-    dist_prop[,i] <- apply(prop_x2dom, 2, min)
+    prop_x2dom <- (dist_x2dom/radii_dominant_list[[i]])^(T_score_list[[i]]^e)
+    dist_prop[,i] <- Rfast::colMins(prop_x2dom, value = TRUE)
   }
   prob <- 1 - t(apply(dist_prop, 1, function(m) m/sum(m)))
 

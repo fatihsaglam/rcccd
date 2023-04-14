@@ -4,12 +4,12 @@
 \alias{rwcccd_classifier}
 \title{Random Walk Class Cover Catch Digraph Classifier}
 \usage{
-rwcccd_classifier(x, y, method = NULL, m = 1, proportion = 1)
+rwcccd_classifier(x, y, method = "a", m = 1, proportion = 0.99)
 }
 \arguments{
-\item{x}{asd.}
+\item{x}{feature matrix or dataframe.}
 
-\item{y}{asd}
+\item{y}{class factor variable.}
 
 \item{method}{asd}
 

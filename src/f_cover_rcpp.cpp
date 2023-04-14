@@ -23,7 +23,6 @@ List f_cover_rcpp(IntegerVector cover,
       }
     }
     i_dominant.push_back(which_max(k_covered));
-    // LogicalVector i_covered = dist_main2main(i_dominant[counter], _) < dist_main2other[i_dominant[counter]];
     LogicalVector i_covered = M(i_dominant[counter], _) > 0;
     for (int i = 0; i < n_main; i++) {
       if (i_covered[i] == 1) {
@@ -38,6 +37,6 @@ List f_cover_rcpp(IntegerVector cover,
     counter ++;
   }
   return List::create(Named("i_dominant") = i_dominant + 1,
-                      Named("cover_proportion") = sum_cover_old/thresh);
+                      Named("cover_proportion") = sum_cover/thresh);
 }
 
