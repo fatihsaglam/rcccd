@@ -11,7 +11,7 @@ pcccd_classifier(x, y, proportion = 1)
 
 \item{y}{class factor variable.}
 
-\item{proportion}{proportion of covered samples. A real number between \eqn{(-1,1)}.
+\item{proportion}{proportion of covered samples. A real number between \eqn{(0,1]}.
 1 by default. Smaller numbers results in less dominant samples.}
 }
 \value{
@@ -24,12 +24,13 @@ an object of "cccd_classifier" which includes:
  \item{proportions}{proportions each class covered}
 }
 \description{
-Pure and Proper Class Cover Catch Digraph (PCCCD) Classification.
+\code{pcccd_classifier} fits a Pure and Proper Class Cover Catch
+Digraph (PCCCD) classification model.
 }
 \details{
-Multiclass framework for pure and proper class cover catch digraph (PCCCD).
-PCCCD determines target class dominant points set \eqn{S} and their circular cover area by determining
-balls \eqn{B(x^{\text{target}}, r_{i})} with radii r using minimum amount of
+Multiclass framework for PCCCD. PCCCD determines target class dominant points
+set \eqn{S} and their circular cover area by determining balls
+\eqn{B(x^{\text{target}}, r_{i})} with radii r using minimum amount of
 dominant point which satisfies \eqn{X^{\text{non-target}}\cap \bigcup_{i}
 B_{i} = \varnothing} (pure) and \eqn{X^{\text{target}}\subset \bigcup_{i}
 B_{i}} (proper).
@@ -39,7 +40,7 @@ samples (pure) and balls cover all target samples (proper). For detail,
 please refer to Priebe et al. (2001), Marchette and Socolinsky (2003), and
 Manukyan and Ceyan (2016).
 
-Note: Much faster than `cccd` package.
+Note: Much faster than \code{cccd} package.
 }
 \examples{
 n <- 1000

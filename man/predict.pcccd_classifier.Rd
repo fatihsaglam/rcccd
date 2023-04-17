@@ -2,36 +2,51 @@
 % Please edit documentation in R/predict.pcccd_classifier.R
 \name{predict.pcccd_classifier}
 \alias{predict.pcccd_classifier}
-\title{Pure and Proper Class Cover Catch Digraph Predictor}
+\title{Pure and Proper Class Cover Catch Digraph Prediction}
 \usage{
 \method{predict}{pcccd_classifier}(object, newdata, type = "pred", ...)
 }
 \arguments{
-\item{object}{asd.}
+\item{object}{a \code{pcccd_classifier} object}
 
-\item{newdata}{asd}
+\item{newdata}{newdata as matrix or dataframe.}
 
-\item{type}{asd}
+\item{type}{"pred" or "prob". Default is "pred". "pred" is class estimations,
+"prob" is \eqn{n\times k} matrix of class probabilities.}
 
-\item{...}{asd}
-}
-\value{
-asd.
- \item{asd}{asd}
+\item{...}{not used.}
 }
 \description{
-Pure and Proper Class Cover Catch Digraph Prediction
+\code{predict.pcccd_classifier} makes prediction using \code{pcccd_classifier} object.
 }
 \details{
-asd
+Estimations are based on nearest dominant neighbor in radius unit.
 }
 \examples{
+n <- 1000
+x1 <- runif(n, 1, 10)
+x2 <- runif(n, 1, 10)
+x <- cbind(x1, x2)
+y <- as.factor(ifelse(3 < x1 & x1 < 7 & 3 < x2 & x2 < 7, "A", "B"))
 
-rnorm(100)
+# testing the performance
+i_train <- sample(1:n, round(n*0.8))
 
-}
-\references{
-asd
+x_train <- x[i_train,]
+y_train <- y[i_train]
+
+x_test <- x[-i_train,]
+y_test <- y[-i_train]
+
+m_pcccd <- pcccd_classifier(x = x_train, y = y_train)
+pred <- predict(object = m_pcccd, newdata = x_test)
+
+# confusion matrix
+table(y_test, pred)
+
+# test accuracy
+sum(y_test == pred)/nrow(x_test)
+
 }
 \author{
 Fatih Saglam, saglamf89@gmail.com

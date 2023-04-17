@@ -2,7 +2,7 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-List f_cover_rcpp(IntegerVector cover,
+List f_cover_pcccd(IntegerVector cover,
                   double thresh,
                   NumericMatrix M,
                   NumericMatrix dist_main2main,

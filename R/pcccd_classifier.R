@@ -1,16 +1,17 @@
 #' @title Pure and Proper Class Cover Catch Digraph Classifier
 #'
-#' @description Pure and Proper Class Cover Catch Digraph (PCCCD) Classification.
+#' @description \code{pcccd_classifier} fits a Pure and Proper Class Cover Catch
+#' Digraph (PCCCD) classification model.
 #'
 #' @param x feature matrix or dataframe.
 #' @param y class factor variable.
-#' @param proportion proportion of covered samples. A real number between \eqn{(-1,1)}.
+#' @param proportion proportion of covered samples. A real number between \eqn{(0,1]}.
 #' 1 by default. Smaller numbers results in less dominant samples.
 #'
 #' @details
-#' Multiclass framework for pure and proper class cover catch digraph (PCCCD).
-#' PCCCD determines target class dominant points set \eqn{S} and their circular cover area by determining
-#' balls \eqn{B(x^{\text{target}}, r_{i})} with radii r using minimum amount of
+#' Multiclass framework for PCCCD. PCCCD determines target class dominant points
+#' set \eqn{S} and their circular cover area by determining balls
+#' \eqn{B(x^{\text{target}}, r_{i})} with radii r using minimum amount of
 #' dominant point which satisfies \eqn{X^{\text{non-target}}\cap \bigcup_{i}
 #' B_{i} = \varnothing} (pure) and \eqn{X^{\text{target}}\subset \bigcup_{i}
 #' B_{i}} (proper).
@@ -20,7 +21,7 @@
 #' please refer to Priebe et al. (2001), Marchette and Socolinsky (2003), and
 #' Manukyan and Ceyan (2016).
 #'
-#' Note: Much faster than `cccd` package.
+#' Note: Much faster than \code{cccd} package.
 #'
 #' @return an object of "cccd_classifier" which includes:
 #'  \item{i_dominant_list}{dominant sample indexes.}
@@ -89,10 +90,23 @@
 #' # test accuracy
 #' sum(y_test == pred)/nrow(x_test)
 #'
-#' @rdname cccd_classifier
+#' @rdname pcccd_classifier
 #' @export
 
 pcccd_classifier <- function(x, y, proportion = 1) {
+
+  if (proportion < 0 | proportion > 1) {
+    stop("proportion must be in range [0,1]")
+  }
+
+  if (!is.matrix(x) & !is.data.frame(x)) {
+    stop("x must be a matrix or data.frame")
+  }
+
+  if (is.data.frame(x)) {
+    x <- as.matrix(x)
+  }
+
   class_names <- levels(y)
   k_class <- length(class_names)
 
@@ -116,11 +130,11 @@ pcccd_classifier <- function(x, y, proportion = 1) {
     cover <- rep(0, n_main)
     thresh <- n_main*proportion
 
-    m_dominant <- f_cover_rcpp(cover = cover,
-                               thresh = thresh,
-                               dist_main2main = dist_main2main,
-                               dist_main2other = dist_main2other,
-                               M = M)
+    m_dominant <- f_cover_pcccd(cover = cover,
+                                thresh = thresh,
+                                dist_main2main = dist_main2main,
+                                dist_main2other = dist_main2other,
+                                M = M)
 
     i_dominant_list[[i]] <- m_dominant$i_dominant
     x_dominant_list[[i]] <- x_main[m_dominant$i_dominant,,drop = FALSE]

@@ -2,38 +2,183 @@
 % Please edit documentation in R/rwcccd_classifier.R
 \name{rwcccd_classifier}
 \alias{rwcccd_classifier}
+\alias{rwcccd_classifier_2}
 \title{Random Walk Class Cover Catch Digraph Classifier}
 \usage{
-rwcccd_classifier(x, y, method = "a", m = 1, proportion = 0.99)
+rwcccd_classifier(x, y, method = "default", m = 1, proportion = 0.99)
+
+rwcccd_classifier_2(
+  x,
+  y,
+  method = "default",
+  m = 1,
+  proportion = 0.99,
+  partial_ordering = FALSE
+)
 }
 \arguments{
 \item{x}{feature matrix or dataframe.}
 
 \item{y}{class factor variable.}
 
-\item{method}{asd}
+\item{method}{"default" or "balanced".}
 
-\item{m}{asd}
+\item{m}{penalization parameter. Takes value in \eqn{[0,\infty)}.}
 
-\item{proportion}{asd}
+\item{proportion}{proportion of covered samples. A real number between \eqn{(0,1]}.}
+
+\item{partial_ordering}{\code{TRUE} or \code{FALSE} Default is \code{FALSE} \code{TRUE} uses partial
+ordering in determining dominant points. It orders incompletely but faster.
+Only for \code{rwcccd_classifier_2}.}
 }
 \value{
-asd.
- \item{asd}{asd}
+a rwcccd_classifier object
+ \item{i_dominant_list}{dominant sample indexes.}
+ \item{x_dominant_list}{dominant samples from feature matrix, x}
+ \item{radii_dominant_list}{Radiuses of the circle for dominant samples}
+ \item{class_names}{class names}
+ \item{k_class}{number of classes}
+ \item{proportions}{proportions each class covered}
 }
 \description{
-Random Walk Class Cover Catch Digraph Classification.
+\code{rwcccd_classifier} and \code{rwcccd_classifier_2} fits a
+Random Walk Class Cover Catch Digraph (RWCCCD) classification model.
+\code{rwcccd_classifier} uses C++ for speed and \code{rwcccd_classifier_2}
+uses R language to determine balls.
 }
 \details{
-asd
+Random Walk Class Cover Catch Digraphs (RWCCD) are determined by calculating
+\eqn{T_{\text{target}}} score for each class as target class as
+
+\deqn{
+T_{\text{target}}=R_{\text{target}}(r_{\text{target}})-\frac{r_{\text{target}}n_u}{2d_m(x)}.
+}
+
+Here, \eqn{r_{\text{target}}} is radius and determined by maximum
+\eqn{R_{\text{target}}(r) - P_{\text{target}}(r)} calculated for each target sample.
+\eqn{R_{\text{target}}(r)} is
+\deqn{
+  R_{\text{target}}(r):=
+  w_{target}|{z\in X^{\text{target}}_{n_{\text{target}}}:d(x^{\text{target}},z)\leq r}| -
+  w_{non-target}|{z\in X^{\text{non-target}}_{n_{\text{non-target}}}:d(x^{\text{target}},z)\leq r}|
+}
+
+and \eqn{P_{\text{target}}(r)} is
+\deqn{
+  P_{\text{target}}(r) = m\times d(x^{\text{target}},z)^p.
+}
+\eqn{m=0} removes penalty. \eqn{w_{target}=1} for default and
+\eqn{w_{target}=n_{\text{target}/n_{\text{non-target}}}} for balanced method.
+\eqn{n_u} is the number of uncovered samples in the current iteration and
+\eqn{d_m(x)} is \eqn{\max{d(x^{\text{target}},x^{\text{uncovered}})}}.
+
+This method is more robust to noise compared to PCCCD However, balls covers
+classes improperly and \eqn{r = 0} can be selected.
+
+For detail, please refer to Priebe et al. (2001), Marchette and Socolinsky (2003),
+and Manukyan and Ceyan (2016).
 }
 \examples{
 
-rnorm(100)
+n <- 500
+x1 <- runif(n, 1, 10)
+x2 <- runif(n, 1, 10)
+x <- cbind(x1, x2)
+y <- as.factor(ifelse(3 < x1 & x1 < 7 & 3 < x2 & x2 < 7, "A", "B"))
+
+par(mfrow = c(1,3))
+
+# dataset
+m_rwcccd_1 <- rwcccd_classifier(x = x, y = y, method = "default", m = 1)
+
+plot(x, col = y, asp = 1, main = "default")
+# dominant samples of first class
+x_center <- m_rwcccd_1$x_dominant_list[[2]]
+# radii of balls for first class
+radii <- m_rwcccd_1$radii_dominant_list[[2]]
+
+# balls
+for (i in 1:nrow(x_center)) {
+  xx <- x_center[i, 1]
+  yy <- x_center[i, 2]
+  r <- radii[i]
+  theta <- seq(0, 2*pi, length.out = 100)
+  xx <- xx + r*cos(theta)
+  yy <- yy + r*sin(theta)
+  lines(xx, yy, type = "l", col = "green")
+}
+
+# dataset
+m_rwcccd_2 <- rwcccd_classifier_2(x = x, y = y, method = "default", m = 1, partial_ordering = TRUE)
+
+plot(x, col = y, asp = 1, main = "default, prartial_ordering = TRUE")
+# dominant samples of first class
+x_center <- m_rwcccd_2$x_dominant_list[[2]]
+# radii of balls for first class
+radii <- m_rwcccd_2$radii_dominant_list[[2]]
+
+# balls
+for (i in 1:nrow(x_center)) {
+  xx <- x_center[i, 1]
+  yy <- x_center[i, 2]
+  r <- radii[i]
+  theta <- seq(0, 2*pi, length.out = 100)
+  xx <- xx + r*cos(theta)
+  yy <- yy + r*sin(theta)
+  lines(xx, yy, type = "l", col = "green")
+}
+
+# dataset
+m_rwcccd_3 <- rwcccd_classifier(x = x, y = y, method = "balanced", m = 1, proportion = 0.5)
+
+plot(x, col = y, asp = 1, main = "balanced, proportion = 0.5")
+# dominant samples of first class
+x_center <- m_rwcccd_3$x_dominant_list[[2]]
+# radii of balls for first class
+radii <- m_rwcccd_3$radii_dominant_list[[2]]
+
+# balls
+for (i in 1:nrow(x_center)) {
+  xx <- x_center[i, 1]
+  yy <- x_center[i, 2]
+  r <- radii[i]
+  theta <- seq(0, 2*pi, length.out = 100)
+  xx <- xx + r*cos(theta)
+  yy <- yy + r*sin(theta)
+  lines(xx, yy, type = "l", col = "green")
+}
+
+# testing the performance
+i_train <- sample(1:n, round(n*0.8))
+
+x_train <- x[i_train,]
+y_train <- y[i_train]
+
+x_test <- x[-i_train,]
+y_test <- y[-i_train]
+
+m_rwcccd <- rwcccd_classifier(x = x_train, y = y_train, method = "balanced")
+pred <- predict(object = m_rwcccd, newdata = x_test)
+
+# confusion matrix
+table(y_test, pred)
+
+# accuracy
+sum(y_test == pred)/nrow(x_test)
 
 }
 \references{
-asd
+Priebe, C. E., DeVinney, J. G., & Marchette, D. J. (2001). On the
+distribution of the domination number for random class cover catch digraphs.
+Statistics & Probability Letters, 55(3), 239-246.
+
+Marchette, C. E. P. D. J., & Socolinsky, J. G. D. D. A. (2003).
+Classiﬁcation Using Class Cover Catch Digraphs. Journal of Classiﬁcation,
+20, 3-23.
+
+Manukyan, A., & Ceyhan, E. (2016). Classification of imbalanced
+data with a geometric digraph family. The Journal of Machine Learning
+Research, 17(1), 6504-6543.
 }
 \author{
 Fatih Saglam, saglamf89@gmail.com

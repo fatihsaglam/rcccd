@@ -2,38 +2,57 @@
 % Please edit documentation in R/predict.rwcccd_classifier.R
 \name{predict.rwcccd_classifier}
 \alias{predict.rwcccd_classifier}
-\title{Random Walk Class Cover Catch Digraph Predictor}
+\title{Random Walk Class Cover Catch Digraph Prediction}
 \usage{
 \method{predict}{rwcccd_classifier}(object, newdata, type = "pred", e = 0, ...)
 }
 \arguments{
-\item{object}{asd.}
+\item{object}{a \code{rwcccd_classifier} object}
 
-\item{newdata}{asd}
+\item{newdata}{newdata as matrix or dataframe.}
 
-\item{type}{asd}
+\item{type}{"pred" or "prob". Default is "pred". "pred" is class estimations,
+"prob" is \eqn{n\times k} matrix of class probabilities.}
 
-\item{e}{asd}
+\item{e}{0 or 1. Default is 0. Penalty based on \eqn{T} scores in
+\code{rwcccd_classifier} object.}
 
-\item{...}{asd}
-}
-\value{
-asd.
- \item{asd}{asd}
+\item{...}{not used.}
 }
 \description{
-Random Walk Class Cover Catch Digraph Prediction
+\code{predict.rwcccd_classifier} makes prediction using
+\code{rwcccd_classifier} object.
 }
 \details{
-asd
+Estimations are based on nearest dominant neighbor in radius unit.
+\code{e} argument is used to penalize estimations based on \eqn{T} scores in
+\code{rwcccd_classifier} object.
 }
 \examples{
+n <- 1000
+x1 <- runif(n, 1, 10)
+x2 <- runif(n, 1, 10)
+x <- cbind(x1, x2)
+y <- as.factor(ifelse(3 < x1 & x1 < 7 & 3 < x2 & x2 < 7, "A", "B"))
 
-rnorm(100)
+# testing the performance
+i_train <- sample(1:n, round(n*0.8))
 
-}
-\references{
-asd
+x_train <- x[i_train,]
+y_train <- y[i_train]
+
+x_test <- x[-i_train,]
+y_test <- y[-i_train]
+
+m_rwcccd <- rwcccd_classifier(x = x_train, y = y_train)
+pred <- predict(object = m_rwcccd, newdata = x_test, e = 0)
+
+# confusion matrix
+table(y_test, pred)
+
+# test accuracy
+sum(y_test == pred)/nrow(x_test)
+
 }
 \author{
 Fatih Saglam, saglamf89@gmail.com

@@ -1,10 +1,12 @@
 Package: rcccd
 Type: Package
 Title: Class Cover Catch Digraph Classification
-Version: 0.2.2
+Version: 0.3.0
 Author: Fatih Sağlam
 Maintainer: Fatih Sağlam <saglamf89@gmail.com>
-Description: Class Cover Catch Digraph Classification.
+Description: Fit Class Cover Catch Digraph Classification models. Pure and 
+  proper and random walk approaches are available. Methods are explained in
+  Priebe et al. (2001) <doi:10.1016/S0167-7152(01)00129-8>, Marchette and Socolinsky (2003) <doi:10.1007/s00357-003-0003-7>, and Manukyan and Ceyan (2016).
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
