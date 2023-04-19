@@ -36,9 +36,11 @@ B_{i} = \varnothing} (pure) and \eqn{X^{\text{target}}\subset \bigcup_{i}
 B_{i}} (proper).
 
 This guarantees that balls of target class never covers any non-target
-samples (pure) and balls cover all target samples (proper). For detail,
+samples (pure) and balls cover all target samples (proper).
+
+For detail,
 please refer to Priebe et al. (2001), Marchette and Socolinsky (2003), and
-Manukyan and Ceyan (2016).
+Manukyan and Ceyhan (2016).
 
 Note: Much faster than \code{cccd} package.
 }

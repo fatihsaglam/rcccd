@@ -44,7 +44,7 @@
 #' classes improperly and \eqn{r = 0} can be selected.
 #'
 #' For detail, please refer to Priebe et al. (2001), Marchette and Socolinsky (2003),
-#' and Manukyan and Ceyan (2016).
+#' and Manukyan and Ceyhan (2016).
 #'
 #' @return a rwcccd_classifier object
 #'  \item{i_dominant_list}{dominant sample indexes.}
@@ -82,15 +82,13 @@
 #' x <- cbind(x1, x2)
 #' y <- as.factor(ifelse(3 < x1 & x1 < 7 & 3 < x2 & x2 < 7, "A", "B"))
 #'
-#' par(mfrow = c(1,3))
-#'
 #' # dataset
 #' m_rwcccd_1 <- rwcccd_classifier(x = x, y = y, method = "default", m = 1)
 #'
 #' plot(x, col = y, asp = 1, main = "default")
-#' # dominant samples of first class
+#' # dominant samples of second class
 #' x_center <- m_rwcccd_1$x_dominant_list[[2]]
-#' # radii of balls for first class
+#' # radii of balls for second class
 #' radii <- m_rwcccd_1$radii_dominant_list[[2]]
 #'
 #' # balls
@@ -108,9 +106,9 @@
 #' m_rwcccd_2 <- rwcccd_classifier_2(x = x, y = y, method = "default", m = 1, partial_ordering = TRUE)
 #'
 #' plot(x, col = y, asp = 1, main = "default, prartial_ordering = TRUE")
-#' # dominant samples of first class
+#' # dominant samples of second class
 #' x_center <- m_rwcccd_2$x_dominant_list[[2]]
-#' # radii of balls for first class
+#' # radii of balls for second class
 #' radii <- m_rwcccd_2$radii_dominant_list[[2]]
 #'
 #' # balls
@@ -128,9 +126,9 @@
 #' m_rwcccd_3 <- rwcccd_classifier(x = x, y = y, method = "balanced", m = 1, proportion = 0.5)
 #'
 #' plot(x, col = y, asp = 1, main = "balanced, proportion = 0.5")
-#' # dominant samples of first class
+#' # dominant samples of second class
 #' x_center <- m_rwcccd_3$x_dominant_list[[2]]
-#' # radii of balls for first class
+#' # radii of balls for second class
 #' radii <- m_rwcccd_3$radii_dominant_list[[2]]
 #'
 #' # balls
