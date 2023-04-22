@@ -38,9 +38,8 @@ B_{i}} (proper).
 This guarantees that balls of target class never covers any non-target
 samples (pure) and balls cover all target samples (proper).
 
-For detail,
-please refer to Priebe et al. (2001), Marchette and Socolinsky (2003), and
-Manukyan and Ceyhan (2016).
+For detail, please refer to Priebe et al. (2001), Priebe et al. (2003),
+and Manukyan and Ceyhan (2016).
 
 Note: Much faster than \code{cccd} package.
 }
@@ -93,11 +92,17 @@ sum(y_test == pred)/nrow(x_test)
 
 }
 \references{
-Priebe, C. E., DeVinney, J. G., & Marchette, D. J. (2001). On the distribution of the domination number for random class cover catch digraphs. Statistics & Probability Letters, 55(3), 239-246.
+Priebe, C. E., DeVinney, J., & Marchette, D. J. (2001). On the distribution
+of the domination number for random class cover catch digraphs. Statistics &
+Probability Letters, 55(3), 239–246. https://doi.org/10.1016/s0167-7152(01)00129-8
 
-Marchette, C. E. P. D. J., & Socolinsky, J. G. D. D. A. (2003). Classiﬁcation Using Class Cover Catch Digraphs. Journal of Classiﬁcation, 20, 3-23.
+Priebe, C. E., Marchette, D. J., DeVinney, J., & Socolinsky, D. A. (2003).
+Classification Using Class Cover Catch Digraphs. Journal of Classification,
+20(1), 3–23. https://doi.org/10.1007/s00357-003-0003-7
 
-Manukyan, A., & Ceyhan, E. (2016). Classification of imbalanced data with a geometric digraph family. The Journal of Machine Learning Research, 17(1), 6504-6543.
+Manukyan, A., & Ceyhan, E. (2016). Classification of imbalanced data with a
+geometric digraph family. Journal of Machine Learning Research, 17(1),
+6504–6543. https://jmlr.org/papers/volume17/15-604/15-604.pdf
 }
 \author{
 Fatih Saglam, saglamf89@gmail.com
