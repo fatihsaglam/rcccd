@@ -78,7 +78,7 @@ predict.pcccd_classifier <- function(object, newdata, type = "pred", ...) {
     prop_x2dom <- dist_x2dom/radii_dominant_list[[i]]
     dist_prop[,i] <- Rfast::colMins(prop_x2dom, value = TRUE)
   }
-  prob <- 1 - t(apply(dist_prop, 1, function(m) m/sum(m)))
+  prob <- t(apply(1/(dist_prop + 1), 1, function(m) m/sum(m)))
 
   if (type == "prob") {
     colnames(prob) <- class_names
