@@ -63,6 +63,14 @@
 #' @export
 
 predict.pcccd_classifier <- function(object, newdata, type = "pred", ...) {
+  if (!(type %in% c("pred", "prob"))) {
+    stop("type must be 'pred' or 'prob'")
+  }
+
+  if (!is.matrix(newdata) & !is.data.frame(newdata)) {
+    stop("newdata must be a matrix or data.frame")
+  }
+
   x_dominant_list <- object$x_dominant_list
   radii_dominant_list <- object$radii_dominant_list
   class_names <- object$class_names

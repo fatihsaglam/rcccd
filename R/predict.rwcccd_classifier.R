@@ -78,11 +78,11 @@ predict.rwcccd_classifier <- function(object, newdata, type = "pred", e = 0, ...
   x <- newdata
 
   if (!(e %in% c(0, 1))) {
-    stop("method must be 0 or 1")
+    stop("e must be 0 or 1")
   }
 
   if (!(type %in% c("pred", "prob"))) {
-    stop("method must be 'pred' or 'prob'")
+    stop("type must be 'pred' or 'prob'")
   }
 
   if (!is.matrix(x) & !is.data.frame(x)) {
