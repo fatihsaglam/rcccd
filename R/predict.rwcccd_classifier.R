@@ -77,8 +77,8 @@ predict.rwcccd_classifier <- function(object, newdata, type = "pred", e = 0, ...
 
   x <- newdata
 
-  if (!(e %in% c(0, 1))) {
-    stop("e must be 0 or 1")
+  if(!(e >= 0 & e <= 1)) {
+    stop("e must be between 0 and 1")
   }
 
   if (!(type %in% c("pred", "prob"))) {
