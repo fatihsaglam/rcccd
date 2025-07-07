@@ -1,7 +1,7 @@
 Package: rcccd
 Type: Package
 Title: Class Cover Catch Digraph Classification
-Version: 0.3.3
+Version: 0.3.4
 Authors@R: 
         c(person("Fatih", "Saglam", email = "saglamf89@gmail.com", 
         role = c("aut", "cre"), 
@@ -12,7 +12,7 @@ Description: Fit Class Cover Catch Digraph Classification models that can be
     <doi:10.1016/S0167-7152(01)00129-8>, Priebe et al. (2003) 
     <doi:10.1007/s00357-003-0003-7>, and Manukyan and Ceyhan (2016) 
     <doi:10.48550/arXiv.1904.04564>.
-Depends: R (>= 4.2)
+Depends: R (>= 4.4)
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: false

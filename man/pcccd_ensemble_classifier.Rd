@@ -13,7 +13,7 @@ pcccd_ensemble_classifier(
   prop_sample = ifelse(replace, 1, 0.67),
   min_proportion = 0.7,
   max_proportion = 1,
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{
@@ -33,6 +33,8 @@ samples to the number of samples in x.}
 \item{min_proportion}{Minimum proportion of cover proportion in weak classifiers.}
 
 \item{max_proportion}{Maximum proportion of cover proportion in weak classifiers.}
+
+\item{verbose}{prints information. Default is FALSE.}
 }
 \value{
 an object of "cccd_classifier" which includes:

@@ -134,14 +134,9 @@ pcccd_classifier <- function(x, y, proportion = 1) {
     M <- dist_main2main < c(dist_main2other)
     M <- matrix(as.numeric(M), n_main)
 
-    cover <- rep(0, n_main)
     thresh <- n_main*proportion
 
-    m_dominant <- f_cover_pcccd(cover = cover,
-                                thresh = thresh,
-                                dist_main2main = dist_main2main,
-                                dist_main2other = dist_main2other,
-                                M = M)
+    m_dominant <- f_cover_pcccd(thresh = thresh, M = M)
 
     i_dominant_list[[i]] <- m_dominant$i_dominant
     x_dominant_list[[i]] <- x_main[m_dominant$i_dominant,,drop = FALSE]

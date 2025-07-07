@@ -12,17 +12,14 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // f_cover_pcccd
-List f_cover_pcccd(IntegerVector cover, double thresh, NumericMatrix M, NumericMatrix dist_main2main, NumericVector dist_main2other);
-RcppExport SEXP _rcccd_f_cover_pcccd(SEXP coverSEXP, SEXP threshSEXP, SEXP MSEXP, SEXP dist_main2mainSEXP, SEXP dist_main2otherSEXP) {
+List f_cover_pcccd(double thresh, IntegerMatrix M);
+RcppExport SEXP _rcccd_f_cover_pcccd(SEXP threshSEXP, SEXP MSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type cover(coverSEXP);
     Rcpp::traits::input_parameter< double >::type thresh(threshSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type M(MSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type dist_main2main(dist_main2mainSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type dist_main2other(dist_main2otherSEXP);
-    rcpp_result_gen = Rcpp::wrap(f_cover_pcccd(cover, thresh, M, dist_main2main, dist_main2other));
+    Rcpp::traits::input_parameter< IntegerMatrix >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(f_cover_pcccd(thresh, M));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -44,7 +41,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rcccd_f_cover_pcccd", (DL_FUNC) &_rcccd_f_cover_pcccd, 5},
+    {"_rcccd_f_cover_pcccd", (DL_FUNC) &_rcccd_f_cover_pcccd, 2},
     {"_rcccd_f_cover_rwcccd", (DL_FUNC) &_rcccd_f_cover_rwcccd, 6},
     {NULL, NULL, 0}
 };

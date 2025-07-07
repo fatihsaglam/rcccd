@@ -12,6 +12,7 @@
 #' samples to the number of samples in x.
 #' @param min_proportion Minimum proportion of cover proportion in weak classifiers.
 #' @param max_proportion Maximum proportion of cover proportion in weak classifiers.
+#' @param verbose prints information. Default is FALSE.
 #'
 #' @details
 #' Bagging framework for PCCCD.
@@ -43,7 +44,7 @@ pcccd_ensemble_classifier <-
            prop_sample = ifelse(replace, 1, 0.67),
            min_proportion = 0.7,
            max_proportion = 1,
-           verbose = TRUE) {
+           verbose = FALSE) {
     if (min_proportion < 0 | min_proportion > 1) {
       stop("min_proportion must be in range [0,1]")
     }
