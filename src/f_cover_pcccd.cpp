@@ -19,7 +19,7 @@ List f_cover_pcccd(double thresh, IntegerMatrix M) {
   while (sum(cover) < thresh) {
     // Zero out cover counts for already covered
     for (int i = 0; i < n_main; i++) {
-      if (cover[i] == 1) n_covers[i] = 0;
+      if (cover[i] == 1) n_covers[i] = -1;
     }
 
     int i_selected = which_max(n_covers);
