@@ -35,62 +35,63 @@
 #' @rdname pcccd_ensemble_classifier
 #' @export
 
-pcccd_ensemble_classifier <-
-  function(x,
-           y,
-           n_model = 30,
-           n_var = ncol(x),
-           replace = FALSE,
-           prop_sample = ifelse(replace, 1, 0.67),
-           min_proportion = 0.7,
-           max_proportion = 1,
-           verbose = FALSE) {
-    if (min_proportion < 0 | min_proportion > 1) {
-      stop("min_proportion must be in range [0,1]")
-    }
-
-    if (max_proportion < 0 | max_proportion > 1) {
-      stop("max_proportion must be in range [0,1]")
-    }
-
-    if (!is.matrix(x) & !is.data.frame(x)) {
-      stop("x must be a matrix or data.frame")
-    }
-
-    if (is.data.frame(x)) {
-      x <- as.matrix(x)
-    }
-
-    class_names <- levels(y)
-    k_class <- length(class_names)
-    n <- nrow(x)
-    p <- ncol(x)
-
-    m_list <- list()
-    var_list <- list()
-    for (i in 1:n_model) {
-      i_sample <- sample(1:n, size = n * prop_sample, replace = replace)
-      i_var <- sample(1:p, size = n_var)
-
-      x_boot <- x[i_sample, i_var, drop = FALSE]
-      y_boot <- y[i_sample]
-
-      m_list[[i]] <-
-        pcccd_classifier(
-          x = x_boot,
-          y = y_boot,
-          proportion = runif(n = 1, min_proportion, max_proportion)
-        )
-      var_list[[i]] <- i_var
-      if (verbose) {
-        cat("\r", round(i/n_model*100, 2), "%")
-      }
-    }
-    results <- list(m_list = m_list,
-                    var_list = var_list,
-                    k_class = k_class,
-                    n_model = n_model,
-                    class_names = class_names)
-    class(results) <- "pcccd_ensemble_classifier"
-    return(results)
+pcccd_ensemble_classifier <- function(x,
+                                      y,
+                                      n_model = 30,
+                                      n_var = ncol(x),
+                                      replace = FALSE,
+                                      prop_sample = ifelse(replace, 1, 0.67),
+                                      min_proportion = 0.7,
+                                      max_proportion = 1,
+                                      verbose = FALSE) {
+  check_proportion(min_proportion, "min_proportion")
+  check_proportion(max_proportion, "max_proportion")
+  if (min_proportion > max_proportion) {
+    stop("min_proportion must not be larger than max_proportion")
   }
+  xy <- check_xy(x, y)
+  x <- xy$x
+  y <- xy$y
+
+  class_names <- levels(y)
+  k_class <- length(class_names)
+  n <- nrow(x)
+  p <- ncol(x)
+
+  if (n_var < 1 || n_var > p) {
+    stop("n_var must be between 1 and ncol(x)")
+  }
+
+  n_sample <- max(2L, as.integer(floor(n * prop_sample)))
+
+  m_list <- vector("list", n_model)
+  var_list <- vector("list", n_model)
+  for (i in seq_len(n_model)) {
+    # resample until at least two classes are present
+    repeat {
+      i_sample <- sample.int(n, size = n_sample, replace = replace)
+      if (length(unique(y[i_sample])) >= 2) break
+    }
+    i_var <- sample.int(p, size = n_var)
+
+    m_list[[i]] <-
+      pcccd_classifier(
+        x = x[i_sample, i_var, drop = FALSE],
+        y = y[i_sample],
+        proportion = runif(n = 1, min_proportion, max_proportion)
+      )
+    var_list[[i]] <- i_var
+    if (verbose) {
+      cat("\r", round(i/n_model*100, 2), "%")
+    }
+  }
+  if (verbose) cat("\n")
+
+  results <- list(m_list = m_list,
+                  var_list = var_list,
+                  k_class = k_class,
+                  n_model = n_model,
+                  class_names = class_names)
+  class(results) <- "pcccd_ensemble_classifier"
+  return(results)
+}

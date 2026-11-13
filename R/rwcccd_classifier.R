@@ -3,7 +3,8 @@
 #' @description \code{rwcccd_classifier} and \code{rwcccd_classifier_2} fits a
 #' Random Walk Class Cover Catch Digraph (RWCCCD) classification model.
 #' \code{rwcccd_classifier} uses C++ for speed and \code{rwcccd_classifier_2}
-#' uses R language to determine balls.
+#' is a slower pure R implementation of the same algorithm (kept as a
+#' reference implementation).
 #'
 #' @param x feature matrix or dataframe.
 #' @param y class factor variable.
@@ -50,6 +51,7 @@
 #'  \item{i_dominant_list}{dominant sample indexes.}
 #'  \item{x_dominant_list}{dominant samples from feature matrix, x}
 #'  \item{radii_dominant_list}{Radiuses of the circle for dominant samples}
+#'  \item{T_score_list}{T scores of the dominant samples}
 #'  \item{class_names}{class names}
 #'  \item{k_class}{number of classes}
 #'  \item{proportions}{proportions each class covered}
@@ -57,8 +59,6 @@
 #' @author Fatih Saglam, saglamf89@gmail.com
 #'
 #' @importFrom  RANN nn2
-#' @importFrom  Rfast Dist
-#' @importFrom  Rfast dista
 #'
 #' @references
 #' Priebe, C. E., DeVinney, J., & Marchette, D. J. (2001). On the distribution
@@ -169,71 +169,63 @@ rwcccd_classifier <- function(
     m = 1,
     proportion = 0.99) {
 
-  if (proportion < 0 | proportion > 1) {
-    stop("proportion must be in range [0,1]")
-  }
-
-  if (!is.matrix(x) & !is.data.frame(x)) {
-    stop("x must be a matrix or data.frame")
-  }
-
-  if (!is.factor(y)) {
-    stop("y must be a factor")
-  }
+  check_proportion(proportion)
+  xy <- check_xy(x, y)
+  x <- xy$x
+  y <- xy$y
 
   if (!(method %in% c("default", "balanced"))) {
     stop("method must be 'default' or 'balanced'")
   }
 
-  if (m < 0) {
-    stop("m must be bigger then zero")
-  }
-
-  if (is.data.frame(x)) {
-    x <- as.matrix(x)
+  if (!is.numeric(m) || length(m) != 1 || is.na(m) || m < 0) {
+    stop("m must be a single non-negative number")
   }
 
   p <- ncol(x)
-  n <- nrow(x)
   class_names <- levels(y)
   k_class <- length(class_names)
 
   i_dominant_list <- vector(mode = "list", length = k_class)
   x_dominant_list <- vector(mode = "list", length = k_class)
   radii_dominant_list <- vector(mode = "list", length = k_class)
-  proportions <- c()
   T_score_list <- vector(mode = "list", length = k_class)
+  proportions <- rep(NA_real_, k_class)
 
-  for (i in 1:k_class) {
+  for (i in seq_len(k_class)) {
     i_main  <- which(y == class_names[i])
-    x_main  <- x[i_main,]
-    x_other <- x[-i_main,]
-    n_main  <- nrow(x_main)
+    n_main  <- length(i_main)
+
+    if (n_main == 0) {
+      i_dominant_list[[i]]     <- integer(0)
+      x_dominant_list[[i]]     <- x[0, , drop = FALSE]
+      radii_dominant_list[[i]] <- numeric(0)
+      T_score_list[[i]]        <- numeric(0)
+      next
+    }
+
+    x_main  <- x[i_main, , drop = FALSE]
+    x_other <- x[-i_main, , drop = FALSE]
     n_other <- nrow(x_other)
 
-    n_main <- nrow(x_main)
-
-    dist_main2other <- Rfast::dista(xnew = x_main, x = x_other)
-    dist_main2main  <- Rfast::Dist(x = x_main)
-    dist_main2all   <- cbind(dist_main2main, dist_main2other)
-
     w <- switch(method,
-                default = c(rep(1, n_main), rep(-1, n_other)),
+                default  = c(rep(1, n_main), rep(-1, n_other)),
                 balanced = c(rep(n_other/n_main, n_main), rep(-1, n_other))
     )
 
-    m_dominant <- f_cover_rwcccd(
+    m_dominant <- cover_rwcccd_cpp(
+      x_main = x_main,
+      x_other = x_other,
+      w = w,
       proportion = proportion,
       m = m,
-      dist_main2all = dist_main2all,
-      dist_main2main = dist_main2main,
-      w = w,
       p = p)
 
-    i_dominant_list[[i]]     <- which(m_dominant$code_dominant == 1)
-    radii_dominant_list[[i]] <- m_dominant$radii[i_dominant_list[[i]]]
-    x_dominant_list[[i]]     <- x_main[i_dominant_list[[i]],,drop = FALSE]
-    T_score_list[[i]]        <- m_dominant$T_score[i_dominant_list[[i]]]
+    i_dominant <- which(m_dominant$code_dominant == 1)
+    i_dominant_list[[i]]     <- i_dominant
+    radii_dominant_list[[i]] <- m_dominant$radii[i_dominant]
+    x_dominant_list[[i]]     <- x_main[i_dominant, , drop = FALSE]
+    T_score_list[[i]]        <- m_dominant$T_score[i_dominant]
     proportions[i]           <- m_dominant$cover_proportion
   }
 
@@ -261,32 +253,21 @@ rwcccd_classifier_2 <- function(
     proportion = 0.99,
     partial_ordering = FALSE) {
 
-  if (proportion < 0 | proportion > 1) {
-    stop("proportion must be in range [0,1]")
-  }
-
-  if (!is.matrix(x) & !is.data.frame(x)) {
-    stop("x must be a matrix or data.frame")
-  }
-
-  if (!is.factor(y)) {
-    stop("y must be a factor")
-  }
+  check_proportion(proportion)
+  xy <- check_xy(x, y)
+  x <- xy$x
+  y <- xy$y
 
   if (!(method %in% c("default", "balanced"))) {
     stop("method must be 'default' or 'balanced'")
   }
 
-  if (m < 0) {
-    stop("m must be bigger then zero")
+  if (!is.numeric(m) || length(m) != 1 || is.na(m) || m < 0) {
+    stop("m must be a single non-negative number")
   }
 
-  if (!isTRUE(partial_ordering) & !isFALSE(partial_ordering)) {
+  if (!isTRUE(partial_ordering) && !isFALSE(partial_ordering)) {
     stop("partial_ordering must be TRUE or FALSE")
-  }
-
-  if (is.data.frame(x)) {
-    x <- as.matrix(x)
   }
 
   p <- ncol(x)
@@ -297,8 +278,8 @@ rwcccd_classifier_2 <- function(
   i_dominant_list <- vector(mode = "list", length = k_class)
   x_dominant_list <- vector(mode = "list", length = k_class)
   radii_dominant_list <- vector(mode = "list", length = k_class)
-  proportions <- c()
   T_score_list <- vector(mode = "list", length = k_class)
+  proportions <- rep(NA_real_, k_class)
 
   if (partial_ordering) {
     f_order <- function(x) {
@@ -308,17 +289,24 @@ rwcccd_classifier_2 <- function(
     f_order <- order
   }
 
-  for (i in 1:k_class) {
+  for (i in seq_len(k_class)) {
     i_main  <- which(y == class_names[i])
-    x_main  <- x[i_main,]
-    x_other <- x[-i_main,]
-    n_main  <- nrow(x_main)
+    n_main  <- length(i_main)
+
+    if (n_main == 0) {
+      i_dominant_list[[i]]     <- integer(0)
+      x_dominant_list[[i]]     <- x[0, , drop = FALSE]
+      radii_dominant_list[[i]] <- numeric(0)
+      T_score_list[[i]]        <- numeric(0)
+      next
+    }
+
+    x_main  <- x[i_main, , drop = FALSE]
+    x_other <- x[-i_main, , drop = FALSE]
     n_other <- nrow(x_other)
 
-    n_main <- nrow(x_main)
-
-    dist_main2other <- Rfast::dista(xnew = x_main, x = x_other)
-    dist_main2main  <- Rfast::Dist(x = x_main)
+    dist_main2other <- cross_dist_cpp(x_main, x_other)
+    dist_main2main  <- cross_dist_cpp(x_main, x_main)
     dist_main2all   <- cbind(dist_main2main, dist_main2other)
 
     w <- switch(method,
@@ -327,13 +315,13 @@ rwcccd_classifier_2 <- function(
     )
 
     cover_main    <- rep(0, n_main)
-    cover_all     <- rep(0, n)
     code_dominant <- rep(0, n_main)
     radii         <- rep(NA, n_main)
     T_score       <- rep(NA, n_main)
+    cover_proportion <- 0
     ww <- w
 
-    while (Inf) {
+    while (TRUE) {
       T_scores <- rep(NA, n_main)
       rs <- rep(NA, n_main)
       i_potentialdom <- which(code_dominant == 0 & cover_main == 0)
@@ -345,7 +333,7 @@ rwcccd_classifier_2 <- function(
       n_uncovered <- sum(cover_main == 0)
 
       for (j in i_potentialdom) {
-        dd <- dist_main2all[j,]
+        dd <- dist_main2all[j, ]
         ii_sort <- f_order(dd)
         dd_sorted <- dd[ii_sort]
         w_sorted <- ww[ii_sort]
@@ -354,43 +342,31 @@ rwcccd_classifier_2 <- function(
         R_penalized_all <- R_all - P_all
         i_R_penalized_max <- which.max(R_penalized_all)
         rs[j] <- dd_sorted[i_R_penalized_max]
-        T_scores[j] <- R_all[i_R_penalized_max] - rs[j]/max(dist_main2main[j,]) * (n_uncovered/2)
+        T_scores[j] <- R_all[i_R_penalized_max] - rs[j]/max(dist_main2main[j, ]) * (n_uncovered/2)
       }
 
       i_selected <- which.max(T_scores)
-      T_score_selected <- T_scores[i_selected]
       r_selected <- rs[i_selected]
-      i_cover_main <- which(dist_main2main[i_selected,] < r_selected)
-      if (length(i_cover_main) > 0) {
-        cover_main[i_cover_main] <- 1
-      }
-      i_cover_all <- which(dist_main2all[i_selected,] < r_selected)
-      if (length(i_cover_all) > 0) {
-        cover_all[i_cover_all] <- 1
-        ww[i_cover_all] <- 0
-      }
+      cover_main[dist_main2main[i_selected, ] < r_selected] <- 1
+      ww[dist_main2all[i_selected, ] < r_selected] <- 0
       code_dominant[i_selected] <- 1
       radii[i_selected] <- r_selected
-      T_score[i_selected] <- T_score_selected
+      T_score[i_selected] <- T_scores[i_selected]
       cover_proportion <- sum(cover_main)/n_main
-      if (cover_proportion >= proportion) {
-        break
-      }
 
-      if (sum(code_dominant) == n_main) {
-        break
-      }
-
-      if (sum(cover_main) == n_main) {
+      if (cover_proportion >= proportion ||
+          sum(code_dominant) == n_main ||
+          sum(cover_main) == n_main) {
         break
       }
     }
 
-    i_dominant_list[[i]] <- which(code_dominant == 1)
-    radii_dominant_list[[i]] <- radii[i_dominant_list[[i]]]
-    x_dominant_list[[i]] <- x_main[i_dominant_list[[i]],,drop = FALSE]
-    T_score_list[[i]] <- T_score[i_dominant_list[[i]]]
-    proportions[i] <- cover_proportion
+    i_dominant <- which(code_dominant == 1)
+    i_dominant_list[[i]]     <- i_dominant
+    radii_dominant_list[[i]] <- radii[i_dominant]
+    x_dominant_list[[i]]     <- x_main[i_dominant, , drop = FALSE]
+    T_score_list[[i]]        <- T_score[i_dominant]
+    proportions[i]           <- cover_proportion
   }
 
   results <- list(

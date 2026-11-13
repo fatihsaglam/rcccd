@@ -1,96 +1,135 @@
-#include <RcppArmadillo.h>
-
-// [[Rcpp::depends(RcppArmadillo)]]
-using namespace arma;
+#include <Rcpp.h>
+#include <vector>
+#include <numeric>
+#include <algorithm>
+#include <cmath>
 using namespace Rcpp;
 
+// Random walk cover. For every target sample the distances to all samples
+// (target first, then non-target) are sorted ONCE; the order does not change
+// between iterations, only the weights do (covered samples get weight 0).
 // [[Rcpp::export]]
-Rcpp::List f_cover_rwcccd(
-    const arma::mat& dist_main2all,
-    const arma::mat& dist_main2main,
-    const arma::vec& w,
-    double proportion,
-    double m,
-    double p) {
+List cover_rwcccd_cpp(NumericMatrix x_main,
+                      NumericMatrix x_other,
+                      NumericVector w,
+                      double proportion,
+                      double m,
+                      double p) {
+  const int n_main = x_main.nrow();
+  const int n_other = x_other.nrow();
+  const int n = n_main + n_other;
+  const int dim = x_main.ncol();
 
-  int n_main = dist_main2all.n_rows;
-  int n = dist_main2all.n_cols;
+  std::vector<double> xt((size_t) n * dim);
+  for (int k = 0; k < dim; k++) {
+    for (int i = 0; i < n_main; i++) xt[(size_t) i * dim + k] = x_main(i, k);
+    for (int i = 0; i < n_other; i++) xt[(size_t) (n_main + i) * dim + k] = x_other(i, k);
+  }
 
-  vec cover_main(n_main, fill::zeros);
-  vec cover_all(n, fill::zeros);
-  vec code_dominant(n_main, fill::zeros);
-  vec radii(n_main);
-  vec T_score(n_main);
-  double cover_proportion;
+  std::vector<int> ord((size_t) n_main * n);
+  std::vector<double> dsort((size_t) n_main * n);
+  std::vector<double> pen((size_t) n_main * n);
+  std::vector<double> dmax_main(n_main, 0.0);
 
-  vec dd;
-  vec T_scores(n_main);
-  vec rs(n_main);
-  int i_selected;
-  double T_score_selected;
-  double r_selected;
-  vec d_m2m_i_selected;
-  vec d_m2a_i_selected;
-  vec ww = w;
-
-  while (sum((code_dominant + cover_main) == 0) >= 1) {
-    T_scores = rep(-1e200, n_main);
-    rs = rep(-1e200, n_main);
-
-    uvec i_potentialdom = find((code_dominant == 0) && (cover_main == 0));
-
-    uvec ii_sort;
-    vec dd_sorted;
-    vec w_sorted;
-    vec R_all;
-    vec P_all;
-    vec R_penalized_all;
-    int i_R_penalized_max;
-    int n_uncovered = sum(cover_main == 0);
-
-    for (int j : i_potentialdom) {
-      dd = dist_main2all.row(j).t();
-      ii_sort = sort_index(dd);
-      dd_sorted = dd(ii_sort);
-      w_sorted = ww(ii_sort);
-      R_all = cumsum(w_sorted);
-      P_all = m*pow(dd_sorted, p);
-      R_penalized_all = R_all - P_all;
-      i_R_penalized_max = R_penalized_all.index_max();
-      rs(j) = dd_sorted(i_R_penalized_max);
-      T_scores(j) = R_all(i_R_penalized_max) - rs(j)/max(dist_main2main.row(j)) * (n_uncovered/2);
-    }
-
-    i_selected = T_scores.index_max();
-    T_score_selected = T_scores(i_selected);
-    r_selected = rs(i_selected);
-
-    d_m2m_i_selected = dist_main2main.row(i_selected).t();
-    cover_main(find(d_m2m_i_selected < r_selected)) = ones<vec>(sum(d_m2m_i_selected < r_selected));
-
-    d_m2a_i_selected = dist_main2all.row(i_selected).t();
-    cover_all(find(d_m2a_i_selected < r_selected)) = ones<vec>(sum(d_m2a_i_selected < r_selected));
-    ww(find(d_m2a_i_selected < r_selected)) = zeros<vec>(sum(d_m2a_i_selected < r_selected));
-
-    code_dominant(i_selected) = 1;
-    radii(i_selected) = r_selected;
-    T_score(i_selected) = T_score_selected;
-    cover_proportion = sum(cover_main)/n_main;
-
-    if (cover_proportion >= proportion) {
-      break;
-    }
-    if (sum(code_dominant) == n_main) {
-      break;
-    }
-    if (sum(cover_main) == n_main) {
-      break;
+  {
+    std::vector<double> d(n);
+    std::vector<int> idx(n);
+    for (int j = 0; j < n_main; j++) {
+      const double* a = &xt[(size_t) j * dim];
+      double mx = 0.0;
+      for (int i = 0; i < n; i++) {
+        const double* b = &xt[(size_t) i * dim];
+        double s = 0.0;
+        for (int k = 0; k < dim; k++) {
+          double t = a[k] - b[k];
+          s += t * t;
+        }
+        d[i] = std::sqrt(s);
+        if (i < n_main && d[i] > mx) mx = d[i];
+      }
+      dmax_main[j] = mx;
+      std::iota(idx.begin(), idx.end(), 0);
+      std::sort(idx.begin(), idx.end(), [&](int u, int v) {
+        return d[u] < d[v] || (d[u] == d[v] && u < v);
+      });
+      const size_t base = (size_t) j * n;
+      for (int k = 0; k < n; k++) {
+        ord[base + k] = idx[k];
+        dsort[base + k] = d[idx[k]];
+        pen[base + k] = m * std::pow(d[idx[k]], p);
+      }
     }
   }
+
+  std::vector<double> ww(w.begin(), w.end());
+  std::vector<char> cover_main(n_main, 0), code_dom(n_main, 0);
+  NumericVector radii(n_main), T_score(n_main);
+  int n_uncovered = n_main;
+  int n_dom = 0;
+  double cover_proportion = 0.0;
+
+  std::vector<double> T_scores(n_main), rs(n_main);
+
+  while (true) {
+    int sel = -1;
+    double best = R_NegInf;
+    int first_cand = -1;
+    for (int j = 0; j < n_main; j++) {
+      if (code_dom[j] || cover_main[j]) continue;
+      if (first_cand < 0) first_cand = j;
+      const size_t base = (size_t) j * n;
+      double R = 0.0, best_val = R_NegInf, R_at = 0.0;
+      int k_at = 0;
+      for (int k = 0; k < n; k++) {
+        R += ww[ord[base + k]];
+        double v = R - pen[base + k];
+        if (v > best_val) {
+          best_val = v;
+          R_at = R;
+          k_at = k;
+        }
+      }
+      const double r = dsort[base + k_at];
+      const double ratio = dmax_main[j] > 0 ? r / dmax_main[j] : 0.0;
+      const double T = R_at - ratio * (n_uncovered / 2.0);
+      rs[j] = r;
+      T_scores[j] = T;
+      if (T > best) {
+        best = T;
+        sel = j;
+      }
+    }
+    if (first_cand < 0) break;     // no candidate left
+    if (sel < 0) sel = first_cand; // all scores NaN
+
+    const double r_sel = rs[sel];
+    const size_t base = (size_t) sel * n;
+    for (int k = 0; k < n; k++) {
+      if (!(dsort[base + k] < r_sel)) break;
+      const int idx = ord[base + k];
+      if (idx < n_main && !cover_main[idx]) {
+        cover_main[idx] = 1;
+        n_uncovered--;
+      }
+      ww[idx] = 0.0;
+    }
+
+    code_dom[sel] = 1;
+    n_dom++;
+    radii[sel] = r_sel;
+    T_score[sel] = T_scores[sel];
+    cover_proportion = (double) (n_main - n_uncovered) / n_main;
+
+    if (cover_proportion >= proportion) break;
+    if (n_dom == n_main) break;
+    if (n_uncovered == 0) break;
+  }
+
+  IntegerVector code_dominant(n_main);
+  for (int j = 0; j < n_main; j++) code_dominant[j] = code_dom[j];
 
   return List::create(Named("code_dominant") = code_dominant,
                       Named("radii") = radii,
                       Named("T_score") = T_score,
                       Named("cover_proportion") = cover_proportion);
 }
-

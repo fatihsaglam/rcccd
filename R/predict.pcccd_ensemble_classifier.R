@@ -23,50 +23,29 @@
 #' @export
 
 predict.pcccd_ensemble_classifier <- function(object, newdata, type = "pred", ...) {
-  m_list <- object$m_list
-  var_list <- object$var_list
-  k_class <- object$k_class
-  n_model <- object$n_model
-  class_names <- object$class_names
+  if (!(type %in% c("pred", "prob"))) {
+    stop("type must be 'pred' or 'prob'")
+  }
+  x <- check_newdata(newdata)
 
-  x <- newdata
   n <- nrow(x)
+  class_names <- object$class_names
+  M_votes <- matrix(0, nrow = n, ncol = object$k_class)
+  i_row <- seq_len(n)
 
-  M_votes <- matrix(data = 0, nrow = n, ncol = k_class)
-
-  for (i in 1:n_model) {
-    x_selected <- x[, var_list[[i]], drop = FALSE]
-    prob <-
-      predict(object = m_list[[i]],
-              newdata = x_selected,
-              type = "prob")
-
-    for (j in 1:n) {
-      M_votes[j, which.max(prob[j,])] <-
-        M_votes[j, which.max(prob[j,])] + 1
-    }
+  for (i in seq_len(object$n_model)) {
+    prob <- predict(object = object$m_list[[i]],
+                    newdata = x[, object$var_list[[i]], drop = FALSE],
+                    type = "prob")
+    i_vote <- cbind(i_row, max.col(prob, ties.method = "first"))
+    M_votes[i_vote] <- M_votes[i_vote] + 1
   }
 
-  prob <- t(apply(M_votes, 1, function(m)
-    m / sum(m)))
+  prob <- M_votes/rowSums(M_votes)
+  colnames(prob) <- class_names
 
   if (type == "prob") {
-    colnames(prob) <- class_names
     return(prob)
   }
-  if (type == "pred") {
-    pred <-
-      factor(class_names[max.col(prob)], levels = class_names, labels = class_names)
-    return(pred)
-  }
+  prob_to_pred(prob, class_names)
 }
-
-
-
-
-
-
-
-
-
-

@@ -1,7 +1,7 @@
 Package: rcccd
 Type: Package
 Title: Class Cover Catch Digraph Classification
-Version: 0.3.4
+Version: 0.4.0
 Authors@R: 
         c(person("Fatih", "Saglam", email = "saglamf89@gmail.com", 
         role = c("aut", "cre"), 
@@ -12,16 +12,17 @@ Description: Fit Class Cover Catch Digraph Classification models that can be
     <doi:10.1016/S0167-7152(01)00129-8>, Priebe et al. (2003) 
     <doi:10.1007/s00357-003-0003-7>, and Manukyan and Ceyhan (2016) 
     <doi:10.48550/arXiv.1904.04564>.
-Depends: R (>= 4.4)
+Depends: R (>= 4.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: false
-RoxygenNote: 7.3.2
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
 LinkingTo: 
-    Rcpp,
-    RcppArmadillo
+    Rcpp
 Imports: 
     Rcpp,
     RANN,
-    Rfast,
-    proxy
+    Rfast
+Config/roxygen2/version: 8.1.1

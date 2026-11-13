@@ -15,7 +15,7 @@ pcccd_classifier(x, y, proportion = 1)
 1 by default. Smaller numbers results in less dominant samples.}
 }
 \value{
-an object of "cccd_classifier" which includes:
+an object of "pcccd_classifier" which includes:
  \item{i_dominant_list}{dominant sample indexes.}
  \item{x_dominant_list}{dominant samples from feature matrix, x}
  \item{radii_dominant_list}{Radiuses of the circle for dominant samples}
@@ -41,7 +41,9 @@ samples (pure) and balls cover all target samples (proper).
 For detail, please refer to Priebe et al. (2001), Priebe et al. (2003),
 and Manukyan and Ceyhan (2016).
 
-Note: Much faster than \code{cccd} package.
+The cover is computed in C++ without storing the pairwise distance matrix, so
+memory use is linear in the number of samples. Much faster than the
+\code{cccd} package.
 }
 \examples{
 n <- 1000

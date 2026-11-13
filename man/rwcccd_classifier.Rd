@@ -36,6 +36,7 @@ a rwcccd_classifier object
  \item{i_dominant_list}{dominant sample indexes.}
  \item{x_dominant_list}{dominant samples from feature matrix, x}
  \item{radii_dominant_list}{Radiuses of the circle for dominant samples}
+ \item{T_score_list}{T scores of the dominant samples}
  \item{class_names}{class names}
  \item{k_class}{number of classes}
  \item{proportions}{proportions each class covered}
@@ -44,7 +45,8 @@ a rwcccd_classifier object
 \code{rwcccd_classifier} and \code{rwcccd_classifier_2} fits a
 Random Walk Class Cover Catch Digraph (RWCCCD) classification model.
 \code{rwcccd_classifier} uses C++ for speed and \code{rwcccd_classifier_2}
-uses R language to determine balls.
+is a slower pure R implementation of the same algorithm (kept as a
+reference implementation).
 }
 \details{
 Random Walk Class Cover Catch Digraphs (RWCCD) are determined by calculating

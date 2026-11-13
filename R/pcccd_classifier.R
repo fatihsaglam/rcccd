@@ -22,9 +22,11 @@
 #' For detail, please refer to Priebe et al. (2001), Priebe et al. (2003),
 #' and Manukyan and Ceyhan (2016).
 #'
-#' Note: Much faster than \code{cccd} package.
+#' The cover is computed in C++ without storing the pairwise distance matrix, so
+#' memory use is linear in the number of samples. Much faster than the
+#' \code{cccd} package.
 #'
-#' @return an object of "cccd_classifier" which includes:
+#' @return an object of "pcccd_classifier" which includes:
 #'  \item{i_dominant_list}{dominant sample indexes.}
 #'  \item{x_dominant_list}{dominant samples from feature matrix, x}
 #'  \item{radii_dominant_list}{Radiuses of the circle for dominant samples}
@@ -35,7 +37,6 @@
 #' @author Fatih Saglam, saglamf89@gmail.com
 #'
 #' @importFrom  RANN nn2
-#' @importFrom  Rfast Dist
 #'
 #' @references
 #' Priebe, C. E., DeVinney, J., & Marchette, D. J. (2001). On the distribution
@@ -102,17 +103,10 @@
 
 pcccd_classifier <- function(x, y, proportion = 1) {
 
-  if (proportion < 0 | proportion > 1) {
-    stop("proportion must be in range [0,1]")
-  }
-
-  if (!is.matrix(x) & !is.data.frame(x)) {
-    stop("x must be a matrix or data.frame")
-  }
-
-  if (is.data.frame(x)) {
-    x <- as.matrix(x)
-  }
+  check_proportion(proportion)
+  xy <- check_xy(x, y)
+  x <- xy$x
+  y <- xy$y
 
   class_names <- levels(y)
   k_class <- length(class_names)
@@ -120,27 +114,31 @@ pcccd_classifier <- function(x, y, proportion = 1) {
   i_dominant_list <- vector(mode = "list", length = k_class)
   x_dominant_list <- vector(mode = "list", length = k_class)
   radii_dominant_list <- vector(mode = "list", length = k_class)
-  proportions <- c()
+  proportions <- rep(NA_real_, k_class)
 
-  for (i in 1:k_class) {
+  for (i in seq_len(k_class)) {
     i_main <- which(y == class_names[i])
-    x_main <- x[i_main,]
-    x_other <- x[-i_main,]
+    n_main <- length(i_main)
 
-    n_main <- nrow(x_main)
+    if (n_main == 0) {
+      i_dominant_list[[i]] <- integer(0)
+      x_dominant_list[[i]] <- x[0, , drop = FALSE]
+      radii_dominant_list[[i]] <- numeric(0)
+      next
+    }
 
-    dist_main2other <- RANN::nn2(data = x_other, query = x_main, k = 1)$nn.dist
-    dist_main2main <- Rfast::Dist(x = x_main)
-    M <- dist_main2main < c(dist_main2other)
-    M <- matrix(as.numeric(M), n_main)
+    x_main <- x[i_main, , drop = FALSE]
+    x_other <- x[-i_main, , drop = FALSE]
 
-    thresh <- n_main*proportion
+    radii <- c(RANN::nn2(data = x_other, query = x_main, k = 1)$nn.dist)
 
-    m_dominant <- f_cover_pcccd(thresh = thresh, M = M)
+    m_dominant <- cover_pcccd_cpp(thresh = n_main*proportion,
+                                  x_main = x_main,
+                                  radii = radii)
 
     i_dominant_list[[i]] <- m_dominant$i_dominant
-    x_dominant_list[[i]] <- x_main[m_dominant$i_dominant,,drop = FALSE]
-    radii_dominant_list[[i]] <- dist_main2other[m_dominant$i_dominant,]
+    x_dominant_list[[i]] <- x_main[m_dominant$i_dominant, , drop = FALSE]
+    radii_dominant_list[[i]] <- radii[m_dominant$i_dominant]
     proportions[i] <- m_dominant$cover_proportion
   }
 
@@ -155,11 +153,3 @@ pcccd_classifier <- function(x, y, proportion = 1) {
   class(results) <- "pcccd_classifier"
   return(results)
 }
-
-
-
-
-
-
-
-

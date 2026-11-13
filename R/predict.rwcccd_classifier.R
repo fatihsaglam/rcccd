@@ -37,8 +37,6 @@
 #' geometric digraph family. Journal of Machine Learning Research, 17(1),
 #' 6504–6543. https://jmlr.org/papers/volume17/15-604/15-604.pdf
 #'
-#' @importFrom proxy dist
-#' @importFrom Rfast colMins
 #'
 #' @examples
 #' n <- 1000
@@ -69,56 +67,20 @@
 #' @export
 
 predict.rwcccd_classifier <- function(object, newdata, type = "pred", e = 0, ...) {
-  x_dominant_list <- object$x_dominant_list
-  radii_dominant_list <- object$radii_dominant_list
-  T_score_list <- object$T_score_list
-  class_names <- object$class_names
-  k_class <- object$k_class
-
-  x <- newdata
-
-  if(!(e >= 0 & e <= 1)) {
+  if (!is.numeric(e) || length(e) != 1 || is.na(e) || e < 0 || e > 1) {
     stop("e must be between 0 and 1")
   }
-
   if (!(type %in% c("pred", "prob"))) {
     stop("type must be 'pred' or 'prob'")
   }
+  x <- check_newdata(newdata)
 
-  if (!is.matrix(x) & !is.data.frame(x)) {
-    stop("newdata must be a matrix or data.frame")
-  }
-
-  if (is.data.frame(x)) {
-    x <- as.matrix(x)
-  }
-
-  n <- nrow(x)
-  dist_prop <- matrix(data = NA, nrow = n, ncol = k_class)
-
-  for (i in 1:k_class) {
-    dist_x2dom <- as.matrix(proxy::dist(x_dominant_list[[i]], x))
-    prop_x2dom <- (dist_x2dom/radii_dominant_list[[i]])^(T_score_list[[i]]^e)
-    dist_prop[,i] <- Rfast::colMins(prop_x2dom, value = TRUE)
-  }
-  prob <- t(apply(1/(dist_prop + 1), 1, function(m) m/sum(m)))
+  expo_list <- lapply(object$T_score_list, function(t) t^e)
+  dist_prop <- class_dist_prop(x, object$x_dominant_list, object$radii_dominant_list, expo_list)
+  prob <- dist_to_prob(dist_prop, object$class_names)
 
   if (type == "prob") {
-    colnames(prob) <- class_names
     return(prob)
   }
-  if (type == "pred") {
-    pred <- factor(class_names[max.col(prob)], levels = class_names, labels = class_names)
-    return(pred)
-  }
+  prob_to_pred(prob, object$class_names)
 }
-
-
-
-
-
-
-
-
-
-
